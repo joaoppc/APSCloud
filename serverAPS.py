@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from flask import Flask, jsonify, abort, make_response
 from flask_restful import Api, Resource, reqparse, fields, marshal
@@ -117,13 +118,12 @@ class TarefasAPI(Resource):
         tarefas = [tarefas for tarefas in tarefas if tarefas['id'] == id]
         if len(tarefas) == 0:
             abort(404)
-        tarefas.remove(tarefas[0])
+        tarefas.remove(tarefa[0])
         return {'resultado': True}
 
 api.add_resource(ListaTarefasAPI, '/Tarefa', endpoint='tarefas')
 api.add_resource(TarefasAPI, '/Tarefa/<int:id>', endpoint='tarefa')
 api.add_resource(Healthy, '/healthcheck', endpoint='health')
-
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
 
