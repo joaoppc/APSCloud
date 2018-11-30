@@ -5,18 +5,6 @@ from flask import Flask, jsonify, abort, make_response
 from flask_restful import Api, Resource, reqparse, fields, marshal
 from flask_httpauth import HTTPBasicAuth
 
-auth = HTTPBasicAuth()
-
-@auth.get_password
-def get_password(username):
-    if username == 'joaoppc':
-        return 'python'
-    return None
-
-
-@auth.error_handler
-def unauthorized():
-    return make_response(jsonify({'mensagem': 'Acesso não autorizado'}), 403)
 
 tarefas = [
     {
@@ -59,13 +47,11 @@ app = Flask(__name__, static_url_path="")
 api = Api(app)
 
 class Healthy(Resource):
-    decorators = [auth.login_required]
 
     def get(self):
         return 200
 
 class ListaTarefasAPI(Resource):
-    decorators = [auth.login_required]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -88,7 +74,6 @@ class ListaTarefasAPI(Resource):
         return {'tarefas': marshal(tarefas, task_fields)}, 201
 
 class TarefasAPI(Resource):
-    decorators = [auth.login_required]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -121,9 +106,15 @@ class TarefasAPI(Resource):
         tarefas.remove(tarefa[0])
         return {'resultado': True}
 
+class CatchAll(Resource):
+
+    def get(self):
+        return 200
+
 api.add_resource(ListaTarefasAPI, '/Tarefa', endpoint='tarefas')
 api.add_resource(TarefasAPI, '/Tarefa/<int:id>', endpoint='tarefa')
 api.add_resource(Healthy, '/healthcheck', endpoint='health')
+api.add_resource(CatchAll, '/catchall', endpoint='catchall')
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
 

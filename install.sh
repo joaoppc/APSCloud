@@ -1,6 +1,12 @@
 #!/bin/sh
 
-sudo apt install python-pip -y
+git clone https://github.com/joaoppc/APSCloud
+apt-get install software-properties-common -y
+apt-add-repository universe
+apt-get update
+apt-get install python-pip -y
 pip install Flask 
 pip install flask_restful 
-pip install flask_httpauth 
+pip install flask_httpauth
+cd /APSCloud
+python serverAPS.py
