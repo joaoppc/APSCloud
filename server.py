@@ -4,39 +4,29 @@
 from flask import Flask, jsonify, abort, make_response
 from flask_restful import Api, Resource, reqparse, fields, marshal
 from flask_httpauth import HTTPBasicAuth
+import json
+import pyrebase
+
 
 app = Flask(__name__, static_url_path="")
 api = Api(app)
-auth = HTTPBasicAuth()
 
 
-@auth.get_password
-def get_password(username):
-    if username == 'joao':
-        return 'python'
-    return None
+
+config = {
+    "apiKey": "AIzaSyAD7XaGs_117Naof60BnP2opuHqo-udAiQ",
+    "authDomain": "projeto-cloud-29792.firebaseapp.com",
+    "databaseURL": "https://projeto-cloud-29792.firebaseio.com",
+    "projectId": "projeto-cloud-29792",
+    "storageBucket": "projeto-cloud-29792.appspot.com",
+    "messagingSenderId": "567778841974"
+  }
+
+firebase = pyrebase.initialize_app(config)
+
+db = firebase.database()
 
 
-@auth.error_handler
-def unauthorized():
-    # return 403 instead of 401 to prevent browsers from displaying the default
-    # auth dialog
-    return make_response(jsonify({'message': 'Unauthorized access'}), 403)
-
-tasks = [
-    {
-        'id': 1,
-        'title': u'Buy groceries',
-        'description': u'Milk, Cheese, Pizza, Fruit, Tylenol',
-        'done': False
-    },
-    {
-        'id': 2,
-        'title': u'Learn Python',
-        'description': u'Need to find a good Python tutorial on the web',
-        'done': False
-    }
-]
 
 task_fields = {
     'title': fields.String,
@@ -44,73 +34,59 @@ task_fields = {
     'done': fields.Boolean,
     'uri': fields.Url('task')
 }
-
-
-class TaskListAPI(Resource):
-    decorators = [auth.login_required]
-
-    def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('title', type=str, required=True,
-                                   help='No task title provided',
-                                   location='json')
-        self.reqparse.add_argument('description', type=str, default="",
-                                   location='json')
-        super(TaskListAPI, self).__init__()
+class Healthy(Resource):
 
     def get(self):
-        return {'tasks': [marshal(task, task_fields) for task in tasks]}
+        return 200
 
-    def post(self):
-        args = self.reqparse.parse_args()
-        task = {
-            'id': tasks[-1]['id'] + 1,
-            'title': args['title'],
-            'description': args['description'],
-            'done': False
-        }
-        tasks.append(task)
-        return {'task': marshal(task, task_fields)}, 201
+@app.route('/tasks', methods=['GET'])
+def get_tasks():
+    return json.dumps(db.child("tasks").get().val())
 
 
-class TaskAPI(Resource):
-    decorators = [auth.login_required]
-
-    def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('title', type=str, location='json')
-        self.reqparse.add_argument('description', type=str, location='json')
-        self.reqparse.add_argument('done', type=bool, location='json')
-        super(TaskAPI, self).__init__()
-
-    def get(self, id):
-        task = [task for task in tasks if task['id'] == id]
-        if len(task) == 0:
-            abort(404)
-        return {'task': marshal(task[0], task_fields)}
-
-    def put(self, id):
-        task = [task for task in tasks if task['id'] == id]
-        if len(task) == 0:
-            abort(404)
-        task = task[0]
-        args = self.reqparse.parse_args()
-        for k, v in args.items():
-            if v is not None:
-                task[k] = v
-        return {'task': marshal(task, task_fields)}
-
-    def delete(self, id):
-        task = [task for task in tasks if task['id'] == id]
-        if len(task) == 0:
-            abort(404)
-        tasks.remove(task[0])
-        return {'result': True}
+@app.route('/tasks/<int:task_id>', methods=['GET'])
+def get_task(task_id):
+    return jsonify({'task': make_public_task(task[0])})
 
 
-api.add_resource(TaskListAPI, '/todo/api/v1.0/tasks', endpoint='tasks')
-api.add_resource(TaskAPI, '/todo/api/v1.0/tasks/<int:id>', endpoint='task')
+@app.route('/tasks', methods=['POST'])
+def create_task():
+    db.child('tasks').push({'id':1})
+    db.child('tasks').push({'title':'Buy groceries'})
+    db.child('tasks').push({'description' :'milk, pizza, eggs'})
+    db.child('tasks').push({'done': False})
+    return 200
+
+
+@app.route('/tasks/<int:task_id>', methods=['PUT'])
+def update_task(task_id):
+    db.child('tasks').update({'id':1})
+    db.child('tasks').update({'title':'Buy groceries'})
+    db.child('tasks').update({'description' :'milk, pizza, eggs'})
+    db.child('tasks').update({'done': False})
+    return 200
+
+
+@app.route('/tasks/<int:task_id>', methods=['DELETE'])
+def delete_task(task_id):
+    db.child('tasks').delete({'id':1})
+    db.child('tasks').delete({'title':'Buy groceries'})
+    db.child('tasks').delete({'description' :'milk, pizza, eggs'})
+    db.child('tasks').delete({'done': False})
+    return 200
+
+
+
+api.add_resource(Healthy, '/healthcheck', endpoint='health')
 
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+
+    def get(self):
+        print(db.child("tasks").get().val())
+        return json.dumps(db.child("tasks").get().val())
+
