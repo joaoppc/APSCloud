@@ -87,8 +87,9 @@ instances = ec2_2.create_instances(
 				pip install Flask 
 				pip install flask_restful 
 				pip install flask_httpauth
+				pip install pyrebase
 				cd /APSCloud
-				python serverAPS.py ''',
+				python server.py ''',
 	TagSpecifications=[
 		{
 			'ResourceType': 'instance',
